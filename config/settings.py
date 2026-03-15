@@ -48,6 +48,10 @@ class Settings(BaseSettings):
     notion_api_key: str = ""
     google_drive_credentials_path: str = ""
 
+    # Jimmy AI Mate Dashboard
+    jimmy_api_url: str = ""
+    jimmy_api_key: str = ""
+
     @property
     def projects_path(self) -> Path:
         return Path(self.projects_base_path).resolve()

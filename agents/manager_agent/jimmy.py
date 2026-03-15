@@ -41,11 +41,50 @@ class OpenClawJimmy:
         self.vector_store = vector_store
         self.learning_system = learning_system
         self.project_store = ProjectStore(settings)
+        self._jimmy_client = self._init_jimmy_client()
+
+    def _init_jimmy_client(self):
+        """Connect to Jimmy AI Mate Dashboard if configured."""
+        if not self.settings.jimmy_api_url or not self.settings.jimmy_api_key:
+            return None
+        try:
+            import sys
+            from pathlib import Path
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "jimmy-ai-mate-dashboard" / "agent"))
+            from jimmy_client import JimmyClient
+            client = JimmyClient(
+                api_url=self.settings.jimmy_api_url,
+                api_key=self.settings.jimmy_api_key,
+            )
+            client.start_heartbeat()
+            logger.info("Connected to Jimmy AI Mate Dashboard at %s", self.settings.jimmy_api_url)
+            return client
+        except Exception as e:
+            logger.warning("Jimmy dashboard not available: %s", e)
+            return None
+
+    def _jlog(self, action: str, payload: dict | None = None) -> None:
+        """Log activity to Jimmy dashboard (non-critical)."""
+        if self._jimmy_client:
+            try:
+                self._jimmy_client.log_activity(action, payload)
+            except Exception:
+                pass
+
+    def _is_killed(self) -> bool:
+        """Check Jimmy dashboard kill switch."""
+        if self._jimmy_client:
+            try:
+                return self._jimmy_client.is_killed()
+            except Exception:
+                pass
+        return False
 
     def handle_project(self, project_brief: str, project_id: str | None = None, template: str = "saas") -> dict[str, Any]:
         """Full orchestration: dispatch all agents, wait, compile."""
         project_id = project_id or str(uuid.uuid4())
         logger.info("Jimmy starting project %s | template=%s", project_id, template)
+        self._jlog("project_started", {"project_id": project_id, "template": template})
 
         # Save brief
         self.project_store.save_context(project_id, "brief", {"brief": project_brief, "template": template})
@@ -56,19 +95,28 @@ class OpenClawJimmy:
         accumulated_outputs: dict[str, Any] = {}
 
         for agent_type in self.AGENT_SEQUENCE:
+            # Check kill switch before each agent
+            if self._is_killed():
+                logger.warning("Kill switch triggered — stopping pipeline at %s", agent_type)
+                self._jlog("pipeline_killed", {"project_id": project_id, "stopped_at": agent_type})
+                break
+
             input_data = self._build_input_data(agent_type, project_brief, template, accumulated_outputs)
             celery_id = self.dispatch_task(agent_type, input_data, project_id=project_id)
             dispatched.append((agent_type, celery_id))
             logger.info("Dispatched %s → celery task %s", agent_type, celery_id)
+            self._jlog("agent_dispatched", {"agent": agent_type, "project_id": project_id})
 
             # Wait for this task before proceeding (sequential pipeline)
             result = self._wait_for_task(celery_id, timeout=300)
             if result:
                 accumulated_outputs[agent_type] = result.get("output", {})
                 self.project_store.save_agent_output(project_id, agent_type, result.get("output", {}))
+                self._jlog("agent_completed", {"agent": agent_type, "project_id": project_id, "tokens": result.get("tokens_used", 0)})
 
         final = self.compile_outputs(project_id)
         logger.info("Jimmy completed project %s", project_id)
+        self._jlog("project_completed", {"project_id": project_id, "credits": self.credit_tracker.summary()})
         return {"project_id": project_id, "status": "completed", "outputs": final, "credits": self.credit_tracker.summary()}
 
     def dispatch_task(self, agent_type: str, input_data: dict[str, Any], project_id: str, priority: int = 5) -> str:

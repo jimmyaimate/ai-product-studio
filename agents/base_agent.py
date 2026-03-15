@@ -83,8 +83,32 @@ class BaseAgent(ABC):
         completion_tokens = response.usage.output_tokens
         self.credit_tracker.record_actual_usage(prompt_tokens, completion_tokens)
 
+        # Report usage to Jimmy dashboard if configured
+        self._report_usage(prompt_tokens, completion_tokens)
+
         text = response.content[0].text if response.content else ""
         return text, prompt_tokens, completion_tokens
+
+    def _report_usage(self, prompt_tokens: int, completion_tokens: int) -> None:
+        """Fire-and-forget usage report to Jimmy AI Mate Dashboard."""
+        if not self.settings.jimmy_api_url or not self.settings.jimmy_api_key:
+            return
+        try:
+            import sys
+            sys.path.insert(0, str(Path(__file__).parent.parent.parent / "jimmy-ai-mate-dashboard" / "agent"))
+            from jimmy_client import JimmyClient
+            client = JimmyClient(
+                api_url=self.settings.jimmy_api_url,
+                api_key=self.settings.jimmy_api_key,
+            )
+            client.log_usage(
+                tokens_input=prompt_tokens,
+                tokens_output=completion_tokens,
+                model=self.settings.default_model,
+            )
+            client.flush_logs()
+        except Exception:
+            pass  # Dashboard reporting is non-critical
 
     def _generate_fallback_prompt(self, messages: list[dict], system_prompt: str) -> str:
         last_user = next(
