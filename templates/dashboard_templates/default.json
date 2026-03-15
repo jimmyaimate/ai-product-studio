@@ -1,0 +1,17 @@
+{
+  "name": "Analytics Dashboard",
+  "description": "Data-heavy admin/analytics dashboard with charts, tables, and filters",
+  "agent_sequence": ["research", "strategy", "ux", "ui", "automation", "documentation"],
+  "initial_context": {
+    "product_type": "dashboard",
+    "typical_components": ["sidebar_nav", "header", "kpi_cards", "charts", "data_tables", "filters", "date_range", "export"],
+    "data_sources": ["REST API", "WebSocket", "CSV upload"],
+    "tech_recommendations": {
+      "frontend": "React + shadcn/ui",
+      "charts": "Recharts or Chart.js",
+      "tables": "TanStack Table",
+      "state": "Zustand or Redux Toolkit",
+      "data_fetching": "React Query"
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "SaaS Dashboard",
+  "description": "Full-stack SaaS product with dashboard, auth, billing, and team management",
+  "agent_sequence": ["research", "strategy", "ux", "ui", "automation", "documentation"],
+  "initial_context": {
+    "product_type": "saas",
+    "typical_features": ["authentication", "dashboard", "billing", "team management", "analytics", "onboarding"],
+    "tech_recommendations": {
+      "frontend": "Next.js + Tailwind CSS",
+      "backend": "FastAPI or Node.js",
+      "auth": "Clerk or Auth0",
+      "payments": "Stripe",
+      "database": "PostgreSQL",
+      "hosting": "Vercel + Railway"
+    },
+    "typical_pages": ["landing", "auth", "dashboard", "settings", "billing", "team", "analytics"]
+  }
+}

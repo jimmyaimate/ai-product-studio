@@ -1,0 +1,17 @@
+{
+  "name": "Landing Page",
+  "description": "High-converting product landing page with hero, features, pricing, and CTA",
+  "agent_sequence": ["research", "strategy", "ux", "ui", "documentation"],
+  "initial_context": {
+    "product_type": "landing_page",
+    "typical_sections": ["hero", "social_proof", "features", "how_it_works", "pricing", "faq", "cta", "footer"],
+    "conversion_goals": ["email_signup", "free_trial", "demo_booking"],
+    "tech_recommendations": {
+      "framework": "Next.js or Astro",
+      "styling": "Tailwind CSS",
+      "analytics": "PostHog or Plausible",
+      "forms": "Resend or ConvertKit",
+      "hosting": "Vercel"
+    }
+  }
+}

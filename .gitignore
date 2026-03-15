@@ -1,0 +1,49 @@
+# Environment
+.env
+.env.local
+.env.server
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime data
+projects/
+logs/
+data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Docker
+docker/volumes/
+
+# Next.js
+frontend/.next/
+frontend/node_modules/
+frontend/.env.local
+frontend/out/
